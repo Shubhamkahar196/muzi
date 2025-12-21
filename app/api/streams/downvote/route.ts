@@ -22,16 +22,18 @@ export async function POST(req: NextRequest) {
   try {
     const data = UpVoteSchema.parse(await req.json());
 
-    await prismaClient.upvote.create({
-      data: {
-        userId: user.id,
-        streamId: data.streamId,
+    await prismaClient.upvote.delete({
+      where: {
+        userId_streamId: {
+          userId: user.id,
+          streamId: data.streamId,
+        },
       },
     });
 
     return NextResponse.json(
-      { message: "Upvoted successfully" },
-      { status: 201 }
+      { message: "Upvote removed successfully" },
+      { status: 200 }
     );
   } catch (error) {
     return NextResponse.json(
