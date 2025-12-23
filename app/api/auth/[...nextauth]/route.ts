@@ -19,14 +19,13 @@ callbacks: {
     try {
       await prismaClient.user.create({
         data: {
-          email: "params.user.email",
+          email: params.user.email,
           provider: "Google"
         }
       })
     } catch (error) {
-       return NextResponse.json({
-        message: "Error while signin"
-       })
+       console.error("Error creating user:", error);
+       return false;
     }
     return true;
   }
