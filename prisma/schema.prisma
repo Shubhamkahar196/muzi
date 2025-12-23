@@ -13,11 +13,9 @@ datasource db {
   provider = "postgresql"
 }
 
-
-
 model User {
   id       String   @id @default(uuid())
-  email String @unique
+  email    String   @unique
   provider Provider
   streams  Stream[]
   upvotes  Upvote[]
@@ -28,6 +26,9 @@ model Stream {
   type        StreamType
   url         String
   extractedId String
+  title       String     @default("")
+  smallUrl    String     @default("")
+  bigUrl      String     @default("")
   active      Boolean    @default(true)
   upvotes     Upvote[]
   userId      String
@@ -52,4 +53,3 @@ enum StreamType {
 enum Provider {
   Google
 }
-

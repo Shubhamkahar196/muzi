@@ -2,7 +2,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import CreateStreamSchema from "@/app/schemas/createStreamSchema";
 import { prismaClient } from "@/app/lib/db";
-
+import youtubesearchapi from "youtube-search-api";
+ 
 const YT_REGEX =
   /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
 
@@ -26,6 +27,7 @@ export async function POST(req: NextRequest) {
     }
 
     const extractedId = extractYouTubeId(data.url);
+   
 
     if (!extractedId) {
       return NextResponse.json(
@@ -33,6 +35,11 @@ export async function POST(req: NextRequest) {
         { status: 411 }
       );
     }
+
+     const res = await youtubesearchapi.GetVideoDetails(extractedId)
+    console.log(res.title)
+    console.log(res.thumbnail.thumbnails)
+    console.log(JSON.stringify(res.thumbnail.thumbnails))
 
     await prismaClient.stream.create({
       data: {
@@ -56,18 +63,17 @@ export async function POST(req: NextRequest) {
 }
 
 
-// export async function GET(req:NextRequest){
-//     const creatorId = req.nextUrl.searchParams.get("creatorId");
-//     const streams = await prismaClient.stream.findMany({
-//       where: {
-//         userId: creatorId ?? ""
-//       }
-//     })
-
-//     return NextResponse.json({
-//       streams
-//     })
-// }
+export async function GET(req:NextRequest){
+    const creatorId = req.nextUrl.searchParams.get("creatorId");
+    const streams = await prismaClient.stream.findMany({
+      where: {
+        userId: creatorId ?? ""
+      }
+    })
+    return NextResponse.json({
+      streams
+    })
+}
 
 
 
