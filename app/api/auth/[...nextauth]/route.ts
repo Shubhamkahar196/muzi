@@ -1,4 +1,3 @@
-
 import { prismaClient } from "@/app/lib/db";
 
 import NextAuth from "next-auth"
@@ -24,7 +23,7 @@ callbacks: {
         }
       })
     } catch (error) {
-      
+
     }
     return true;
   }
