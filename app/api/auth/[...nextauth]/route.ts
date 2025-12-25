@@ -2,7 +2,7 @@ import { prismaClient } from "@/app/lib/db";
 
 import NextAuth from "next-auth"
 import GoogleProvider from "next-auth/providers/google";
-import type { User } from "next-auth";
+import type { User, Session, Account, Profile } from "next-auth";
 
 
 export const authOptions = {
@@ -30,6 +30,19 @@ callbacks: {
       return false;
     }
     return true;
+  },
+  async session({ session, token }: { session: Session; token: any }) {
+    if (session.user?.email) {
+      const dbUser = await prismaClient.user.findUnique({
+        where: {
+          email: session.user.email
+        }
+      });
+      if (dbUser) {
+        (session.user as any).id = dbUser.id;
+      }
+    }
+    return session;
   }
 }
 }

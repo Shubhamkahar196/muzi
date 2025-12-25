@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { useEffect } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -12,21 +12,101 @@ import {
   Share2
 } from "lucide-react"
 import axios from "axios"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
+
+
 
 const REFRESH_INTERVAL_MS = 10 * 1000;
 
-export default function dashboard() {
+interface Stream {
+  id: string;
+  title: string;
+  upvotes: number;
+  extractedId: string;
+  type: string;
+  url: string;
+  smallImg: string;
+  bigImg: string;
+  createdAt: string;
+  userId: string;
+  haveUpVoted: boolean
+}
+
+export default function Dashboard() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [streams, setStreams] = useState<Stream[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [inputLink, setInputLink] = useState('')
+  // Redirect to sign in if not authenticated
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/");
+    }
+  }, [status, router]);
+
+  // Only fetch streams if authenticated
   async function refreshStreams(){
-    const res = await axios.get(`/api/streams/my`)
-    console.log(res)
+    if (status !== "authenticated") return;
+
+    try {
+      const res = await axios.get(`/api/streams/my`);
+      console.log(res.data);
+      setStreams(res.data.streams || []);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching streams:", error);
+      setLoading(false);
+    }
   }
 
-  useEffect(()=>{
-    refreshStreams();
-    const interval = setInterval(()=>{
+  async function handleUpvote(streamId: string) {
+    try {
+      await axios.post(`/api/streams/upvote`, {
+        streamId: streamId
+      });
+      // Refresh streams after upvote
+      refreshStreams();
+    } catch (error) {
+      console.error("Error upvoting:", error);
+    }
+  }
 
-    },REFRESH_INTERVAL_MS)
-  },[])
+  async function handleDownvote(streamId: string) {
+    try {
+      await axios.post(`/api/streams/downvote`, {
+        streamId: streamId
+      });
+      // Refresh streams after downvote
+      refreshStreams();
+    } catch (error) {
+      console.error("Error downvoting:", error);
+    }
+  }
+
+  const handleShare = () => {
+    const shareableLink = `${window.location.hostname}/creator/${creatorId}`;
+    navigator.clipboard.writeText(shareableLink).then(() => {
+      alert("Link copied to clipboard!");
+    }).catch(() => {
+      alert("Failed to copy link");
+    });
+  };
+
+  
+
+  useEffect(()=>{
+    if (status === "authenticated") {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      refreshStreams();
+      const interval = setInterval(()=>{
+        refreshStreams();
+      }, REFRESH_INTERVAL_MS);
+
+      return () => clearInterval(interval);
+    }
+  }, [status])
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black to-zinc-900 text-white px-6 py-8">
@@ -34,7 +114,7 @@ export default function dashboard() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Song Voting Queue</h1>
-        <Button variant="secondary" className="gap-2">
+        <Button variant="secondary" className="gap-2" onClick={handleShare}>
           <Share2 size={16} /> Share
         </Button>
       </div>
@@ -42,10 +122,30 @@ export default function dashboard() {
     
       <div className="space-y-3 mb-8">
         <Input
-          placeholder="Paste project / task link here"
+          value={inputLink}
+          onChange={(e) => setInputLink(e.target.value)}
+          placeholder="Paste YouTube link here"
           className="bg-zinc-800 border-zinc-700"
         />
-        <Button className="w-full bg-purple-600 hover:bg-purple-700">
+        <Button onClick={async ()=>{
+          try {
+            await axios.post(`/api/streams`, {
+              creatorId: session?.user?.id,
+              url: inputLink
+            });
+            setInputLink(''); // Clear input on success
+            refreshStreams(); // Refresh the list
+          } catch (error) {
+            console.error("Error adding to queue:", error);
+            if (axios.isAxiosError(error)) {
+              alert(error.response?.data?.message || "Failed to add to queue");
+            } else {
+              alert("Failed to add to queue");
+            }
+          }
+        }}
+
+        className="w-full bg-purple-600 hover:bg-purple-700">
           Add to Queue
         </Button>
       </div>
@@ -65,58 +165,61 @@ export default function dashboard() {
         </Button>
       </div>
 
-     
       <div>
-        <h2 className="text-xl font-semibold mb-4">Upcoming Song</h2>
+        <h2 className="text-xl font-semibold mb-4">Upcoming Songs</h2>
 
-        <div className="space-y-4">
-          {projects.map((project, index) => (
-            <Card key={index} className="bg-zinc-900 border-zinc-800">
-              <CardContent className="flex justify-between items-center p-4">
-                
-                <div>
-                  <h3 className="font-semibold">{project.title}</h3>
-                  <Badge variant="secondary" className="mt-1">
-                    {project.category}
-                  </Badge>
-                </div>
+        {loading ? (
+          <div className="text-center text-zinc-400 py-8">Loading streams...</div>
+        ) : streams.length === 0 ? (
+          <div className="text-center text-zinc-400 py-8">No streams found</div>
+        ) : (
+          <div className="space-y-4">
+            {streams.map((stream) => (
+              <Card key={stream.id} className="bg-zinc-900 border-zinc-800">
+                <CardContent className="flex justify-between items-center p-4">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={stream.smallImg}
+                      alt={stream.title}
+                      className="w-50 h-50 rounded object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = "https://via.placeholder.com/48x48?text=No+Image";
+                      }}
+                    />
+                    <div>
+                      <h3 className="font-semibold text-zinc-100">{stream.title}</h3>
+                      <Badge variant="secondary" className="mt-1">
+                        {stream.type}
+                      </Badge>
+                    </div>
+                  </div>
 
-                <div className="flex items-center gap-3">
-                  <Button size="sm" variant="outline" className="gap-1">
-                    <ThumbsUp size={14} /> {project.up}
-                  </Button>
-                  <Button size="sm" variant="outline" className="gap-1">
-                    <ThumbsDown size={14} /> {project.down}
-                  </Button>
-                </div>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1"
+                      onClick={() => handleUpvote(stream.id)}
+                    >
+                      <ThumbsUp size={14} /> {stream.upvotes}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1"
+                      onClick={() => handleDownvote(stream.id)}
+                    >
+                      <ThumbsDown size={14} />
+                    </Button>
+                  </div>
 
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
 
     </div>
   )
 }
-
-const projects = [
-  {
-    title: "AI Resume Builder",
-    category: "Full Stack",
-    up: 5,
-    down: 1
-  },
-  {
-    title: "College ERP System",
-    category: "Java + SQL",
-    up: 3,
-    down: 0
-  },
-  {
-    title: "Blog CMS Platform",
-    category: "Next.js",
-    up: 2,
-    down: 1
-  }
-]

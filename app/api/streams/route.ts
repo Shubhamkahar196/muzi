@@ -3,9 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import CreateStreamSchema from "@/app/schemas/createStreamSchema";
 import { prismaClient } from "@/app/lib/db";
 import youtubesearchapi from "youtube-search-api";
- 
-const YT_REGEX =
-  /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
+import { YT_REGEX } from "@/app/lib/utils"; 
 
 function extractYouTubeId(url: string): string | null {
   const match = url.match(
@@ -22,21 +20,21 @@ export async function POST(req: NextRequest) {
     if (!isYT) {
       return NextResponse.json(
         { message: "Wrong URL Format" },
-        { status: 411 }
+        { status: 400 }
       );
     }
 
     const extractedId = extractYouTubeId(data.url);
-   
+
 
     if (!extractedId) {
       return NextResponse.json(
         { message: "Invalid YouTube URL" },
-        { status: 411 }
+        { status: 400 }
       );
     }
 
-     const res = await youtubesearchapi.GetVideoDetails(extractedId)
+    const res = await youtubesearchapi.GetVideoDetails(extractedId)
     console.log(res.title)
     console.log(res.thumbnail.thumbnails)
     const thumbnails = res.thumbnail.thumbnails
@@ -62,7 +60,7 @@ export async function POST(req: NextRequest) {
     console.log(e)
     return NextResponse.json(
       { message: "Error while adding a stream" },
-      { status: 411 }
+      { status: 500 }
     );
   }
 }
@@ -79,6 +77,3 @@ export async function GET(req:NextRequest){
       streams
     })
 }
-
-
-
