@@ -3,7 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 import CreateStreamSchema from "@/app/schemas/createStreamSchema";
 import { prismaClient } from "@/app/lib/db";
 import youtubesearchapi from "youtube-search-api";
-import { YT_REGEX } from "@/app/lib/utils"; 
+import { YT_REGEX } from "@/app/lib/utils";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 function extractYouTubeId(url: string): string | null {
   const match = url.match(
@@ -66,6 +68,68 @@ export async function POST(req: NextRequest) {
 }
 
 
+export async function DELETE(req: NextRequest) {
+  try {
+    const { streamId } = await req.json();
+
+    if (!streamId) {
+      return NextResponse.json(
+        { message: "Stream ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // Verify ownership
+    const session = await getServerSession(authOptions);
+    const user = await prismaClient.user.findFirst({
+      where: {
+        email: session?.user?.email ?? "",
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { message: "Unauthenticated" },
+        { status: 403 }
+      );
+    }
+
+    const stream = await prismaClient.stream.findFirst({
+      where: {
+        id: streamId,
+        userId: user.id,
+      },
+    });
+
+    if (!stream) {
+      return NextResponse.json(
+        { message: "Stream not found or not owned by user" },
+        { status: 404 }
+      );
+    }
+
+    await prismaClient.stream.update({
+      where: {
+        id: streamId,
+      },
+      data: {
+        active: false,
+      },
+    });
+
+    return NextResponse.json(
+      { message: "Stream deleted successfully" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error deleting stream:", error);
+    return NextResponse.json(
+      { message: "Error while deleting stream" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function GET(req:NextRequest){
   try {
     const creatorId = req.nextUrl.searchParams.get("creatorId");
@@ -79,6 +143,8 @@ export async function GET(req:NextRequest){
     const streams = await prismaClient.stream.findMany({
       where: {
         userId: creatorId,
+        active: true,
+        played: false,
       },
       include: {
         _count: {
@@ -86,13 +152,23 @@ export async function GET(req:NextRequest){
             upvotes: true,
           },
         },
-        upvotes: true, // Include all upvotes for haveUpVoted check
+        upvotes: true, // Include all upvotes for counting
+      },
+      orderBy: {
+        createAt: 'asc',
       },
     });
     return NextResponse.json({
-      streams: streams.map(({ _count, upvotes, ...rest }) => ({
-        ...rest,
-        upvotes: _count.upvotes,
+      streams: streams.map((stream) => ({
+        id: stream.id,
+        title: stream.title,
+        upvotes: stream._count.upvotes,
+        extractedId: stream.extractedId,
+        type: stream.type,
+        url: stream.url,
+        smallImg: stream.smallImg,
+        bigImg: stream.bigImg,
+        userId: stream.userId,
         haveUpVoted: false, // For public view, maybe not check per user
       })),
     });

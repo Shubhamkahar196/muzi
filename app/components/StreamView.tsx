@@ -9,7 +9,8 @@ import {
   ThumbsUp,
   ThumbsDown,
   Play,
-  Share2
+  Share2,
+  Trash2
 } from "lucide-react"
 import axios from "axios"
 import { useSession } from "next-auth/react"
@@ -17,7 +18,7 @@ import { useRouter } from "next/navigation"
 
 
 
-const REFRESH_INTERVAL_MS = 10 * 1000;
+const REFRESH_INTERVAL_MS = 30 * 1000;
 
 interface Stream {
   id: string;
@@ -28,19 +29,29 @@ interface Stream {
   url: string;
   smallImg: string;
   bigImg: string;
-  createdAt: string;
   userId: string;
   haveUpVoted: boolean
 }
 
+interface Video {
+  id: string;
+  title: string;
+  extractedId: string;
+  bigImg: string;
+}
+
 export default function StreamView({
-    creatorId
+    creatorId,
+    playVideo = false
 }:{
-    creatorId: string
+    creatorId: string;
+    playVideo: boolean;
 }) {
+  
   const { data: session, status } = useSession();
   const router = useRouter();
   const [streams, setStreams] = useState<Stream[]>([]);
+  const [currentVideo, setCurrentVideo] =  useState<Video | null>(null)
   const [loading, setLoading] = useState(true);
   const [inputLink, setInputLink] = useState('')
   // Redirect to sign in if not authenticated
@@ -55,12 +66,10 @@ export default function StreamView({
     if (status !== "authenticated") return;
 
     try {
-      const res = await axios.get(`/api/streams/?creatorId=${creatorId}`);
+      const res = await axios.get(`/api/streams/my`);
       console.log(res.data);
       setStreams(res.data.streams || []);
       setLoading(false);
-      
-      
     } catch (error) {
       console.error("Error fetching streams:", error);
       setLoading(false);
@@ -91,8 +100,21 @@ export default function StreamView({
     }
   }
 
+  async function handleDelete(streamId: string) {
+    try {
+      await axios.delete(`/api/streams`, {
+        data: { streamId }
+      });
+      // Refresh streams after delete
+      refreshStreams();
+    } catch (error) {
+      console.error("Error deleting stream:", error);
+      alert("Failed to delete stream");
+    }
+  }
+
   const handleShare = () => {
-    const shareableLink = `${window.location.origin}/creator/${creatorId}`;
+    const shareableLink = `${window.location.href}`;
     navigator.clipboard.writeText(shareableLink).then(() => {
       alert("Link copied to clipboard!");
     }).catch(() => {
@@ -100,7 +122,23 @@ export default function StreamView({
     });
   };
 
-  
+  const playNext = async () => {
+    if (streams.length > 0) {
+      // Streams are already sorted by upvotes desc, then createAt asc
+      const nextStream = streams[0];
+
+      const video: Video = {
+        id: nextStream.id,
+        title: nextStream.title,
+        extractedId: nextStream.extractedId,
+        bigImg: nextStream.bigImg
+      };
+
+      setCurrentVideo(video);
+    }
+  }
+
+
 
   useEffect(()=>{
     if (status === "authenticated") {
@@ -116,7 +154,7 @@ export default function StreamView({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black to-zinc-900 text-white px-6 py-8">
-      
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Song Voting Queue</h1>
@@ -125,105 +163,175 @@ export default function StreamView({
         </Button>
       </div>
 
-    
-      <div className="space-y-3 mb-8">
-        <Input
-          value={inputLink}
-          onChange={(e) => setInputLink(e.target.value)}
-          placeholder="Paste YouTube link here"
-          className="bg-zinc-800 border-zinc-700"
-        />
-        <Button onClick={async ()=>{
-          try {
-            await axios.post(`/api/streams`, {
-              creatorId: session?.user?.id,
-              url: inputLink
-            });
-            setInputLink(''); // Clear input on success
-            refreshStreams(); // Refresh the list
-          } catch (error) {
-            console.error("Error adding to queue:", error);
-            if (axios.isAxiosError(error)) {
-              alert(error.response?.data?.message || "Failed to add to queue");
-            } else {
-              alert("Failed to add to queue");
-            }
-          }
-        }}
+      {/* Main Content - Two Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-        className="w-full bg-purple-600 hover:bg-purple-700">
-          Add to Queue
-        </Button>
-      </div>
+        {/* Left Column - Upcoming Songs */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Upcoming Songs</h2>
+          {streams.length === 0 && <Card className="bg-gray-900 border-gray-800 w-full">
+             <CardContent className="p-4">
+              <p className="text-center py-8 text-gray-400">No videos in queue</p>
+             </CardContent>
+            </Card>}
 
-      
-      <div className="mb-10">
-        <h2 className="text-xl font-semibold mb-3">Now Playing</h2>
-
-        <Card className="bg-zinc-900 border-zinc-800">
-          <CardContent className="flex items-center justify-center h-40 text-zinc-400">
-            No Video Playing
-          </CardContent>
-        </Card>
-
-        <Button className="w-full mt-4 bg-purple-600 hover:bg-purple-700 gap-2">
-          <Play size={18} /> Play Next
-        </Button>
-      </div>
-
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Upcoming Songs</h2>
-
-        {loading ? (
-          <div className="text-center text-zinc-400 py-8">Loading streams...</div>
-        ) : streams.length === 0 ? (
-          <div className="text-center text-zinc-400 py-8">No streams found</div>
-        ) : (
-          <div className="space-y-4">
-            {streams.map((stream) => (
-              <Card key={stream.id} className="bg-zinc-900 border-zinc-800">
-                <CardContent className="flex justify-between items-center p-4">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={stream.smallImg}
-                      alt={stream.title}
-                      className="w-50 h-50 rounded object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src = "https://via.placeholder.com/48x48?text=No+Image";
-                      }}
-                    />
-                    <div>
-                      <h3 className="font-semibold text-zinc-100">{stream.title}</h3>
-                      <Badge variant="secondary" className="mt-1">
-                        {stream.type}
-                      </Badge>
+          {loading ? (
+            <div className="text-center text-zinc-400 py-8">Loading streams...</div>
+          ) : streams.length === 0 ? (
+            <div className="text-center text-zinc-400 py-8">No streams found</div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {streams.map((stream) => (
+                <Card key={stream.id} className="bg-zinc-900 border-zinc-800">
+                  <CardContent className="flex justify-between items-center p-4">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={stream.smallImg}
+                        alt={stream.title}
+                        className="w-12 h-12 rounded object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = "https://via.placeholder.com/48x48?text=No+Image";
+                        }}
+                      />
+                      <div>
+                        <h3 className="font-semibold text-zinc-100 text-sm">{stream.title}</h3>
+                        <Badge variant="secondary" className="mt-1 text-xs">
+                          {stream.type}
+                        </Badge>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-3">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1"
-                      onClick={() => handleUpvote(stream.id)}
-                    >
-                      <ThumbsUp size={14} /> {stream.upvotes}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1"
-                      onClick={() => handleDownvote(stream.id)}
-                    >
-                      <ThumbsDown size={14} />
-                    </Button>
-                  </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1 h-8 px-2"
+                        onClick={() => handleUpvote(stream.id)}
+                      >
+                        <ThumbsUp size={12} /> {stream.upvotes}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1 h-8 px-2"
+                        onClick={() => handleDownvote(stream.id)}
+                      >
+                        <ThumbsDown size={12} />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="gap-1 h-8 px-2"
+                        onClick={() => handleDelete(stream.id)}
+                      >
+                        <Trash2 size={12} />
+                      </Button>
+                    </div>
 
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Right Column - Add Video + Now Playing */}
+        <div className="space-y-6">
+
+          {/* Add Video Section */}
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Add to Queue</h2>
+            <div className="space-y-3">
+              <Input
+                value={inputLink}
+                onChange={(e) => setInputLink(e.target.value)}
+                placeholder="Paste YouTube link here"
+                className="bg-zinc-800 border-zinc-700"
+              />
+              <Button onClick={async ()=>{
+                const wasEmpty = streams.length === 0;
+                try {
+                  await axios.post(`/api/streams`, {
+                    creatorId: session?.user?.id,
+                    url: inputLink
+                  });
+                  setInputLink(''); // Clear input on success
+                  await refreshStreams(); // Refresh the list
+
+                  // If queue was empty, play the newly added video immediately
+                  if (wasEmpty && streams.length > 0) {
+                    const newStream = streams[0]; // Since we refreshed, this should be the new one
+                    const video: Video = {
+                      id: newStream.id,
+                      title: newStream.title,
+                      extractedId: newStream.extractedId,
+                      bigImg: newStream.bigImg
+                    };
+                    setCurrentVideo(video);
+                  }
+                } catch (error) {
+                  console.error("Error adding to queue:", error);
+                  if (axios.isAxiosError(error)) {
+                    alert(error.response?.data?.message || "Failed to add to queue");
+                  } else {
+                    alert("Failed to add to queue");
+                  }
+                }
+              }}
+
+              className="w-full bg-purple-600 hover:bg-purple-700">
+                Add to Queue
+              </Button>
+            </div>
           </div>
-        )}
+
+          {/* Now Playing Section */}
+          <div>
+            <h2 className="text-xl font-semibold mb-3">Now Playing</h2>
+
+            <Card className="bg-zinc-900 border-zinc-800">
+              <CardContent className="p-4">
+                {currentVideo ? (
+                  <div className="space-y-4">
+                    {playVideo ? (
+                      <iframe
+                        width="100%"
+                        height="200"
+                        src={`https://www.youtube.com/embed/${currentVideo.extractedId}?autoplay=1`}
+                        title={currentVideo.title}
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="rounded"
+                      ></iframe>
+                    ) : (
+                      <img
+                        src={currentVideo.bigImg}
+                        alt={currentVideo.title}
+                        className="w-full h-32 object-cover rounded"
+                      />
+                    )}
+                    <p className="text-center font-semibold text-white">{currentVideo?.title}</p>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-32 text-zinc-400">
+                    No Video Playing
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            {playVideo && (
+              <Button
+                onClick={playNext}
+                className="w-full mt-4 bg-purple-600 hover:bg-purple-700 gap-2"
+              >
+                <Play size={18} /> Play Next
+              </Button>
+            )}
+          </div>
+
+        </div>
+
       </div>
 
     </div>

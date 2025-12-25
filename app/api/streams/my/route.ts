@@ -27,6 +27,8 @@ export async function GET() {
     const streams = await prismaClient.stream.findMany({
       where: {
         userId: user.id,
+        active: true,
+        played: false,
       },
       include: {
         _count: {
@@ -39,6 +41,9 @@ export async function GET() {
             userId: user.id,
           },
         },
+      },
+      orderBy: {
+        createAt: 'asc',
       },
     });
 
