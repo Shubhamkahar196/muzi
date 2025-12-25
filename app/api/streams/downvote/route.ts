@@ -6,22 +6,22 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-
-  const user = await prismaClient.user.findFirst({
-    where: {
-      email: session?.user?.email ?? "",
-    },
-  });
-
-  if (!user) {
-    return NextResponse.json(
-      { message: "Unauthenticated" },
-      { status: 403 }
-    );
-  }
-
   try {
+    const session = await getServerSession(authOptions);
+
+    const user = await prismaClient.user.findFirst({
+      where: {
+        email: session?.user?.email ?? "",
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { message: "Unauthenticated" },
+        { status: 403 }
+      );
+    }
+
     const data = UpVoteSchema.parse(await req.json());
 
     await prismaClient.upvote.delete({
@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
+    console.error("Error downvoting:", error);
     return NextResponse.json(
       {
         message:
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
             ? error.message
             : "Something went wrong",
       },
-      { status: 411 }
+      { status: 500 }
     );
   }
 }

@@ -67,13 +67,44 @@ export async function POST(req: NextRequest) {
 
 
 export async function GET(req:NextRequest){
+  try {
     const creatorId = req.nextUrl.searchParams.get("creatorId");
+    if(!creatorId){
+      return NextResponse.json({
+        message: "Creator ID is required"
+      },{
+        status: 400
+      })
+    }
     const streams = await prismaClient.stream.findMany({
       where: {
-        userId: creatorId ?? ""
-      }
-    })
+        userId: creatorId,
+      },
+      include: {
+        _count: {
+          select: {
+            upvotes: true,
+          },
+        },
+        upvotes: true, // Include all upvotes for haveUpVoted check
+      },
+    });
     return NextResponse.json({
-      streams
-    })
+      streams: streams.map(({ _count, upvotes, ...rest }) => ({
+        ...rest,
+        upvotes: _count.upvotes,
+        haveUpVoted: false, // For public view, maybe not check per user
+      })),
+    });
+  } catch (error) {
+    console.error("Error fetching streams:", error);
+    return NextResponse.json(
+      {
+        message: "Internal server error",
+      },
+      {
+        status: 500,
+      }
+    );
+  }
 }
