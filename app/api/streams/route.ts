@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     console.log(res.thumbnail.thumbnails)
     const thumbnails = res.thumbnail.thumbnails
     thumbnails.sort((a: {width:number}, b:{width:number}) => a.width < b.width ? -1 : 1);
-    await prismaClient.stream.create({
+    const newStream = await prismaClient.stream.create({
       data: {
         userId: data.creatorId,
         url: data.url,
@@ -54,10 +54,31 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json(
-      { message: "Stream added successfully" },
-      { status: 201 }
-    );
+    // Get the stream with upvotes count
+    const streamWithUpvotes = await prismaClient.stream.findUnique({
+      where: { id: newStream.id },
+      include: {
+        _count: {
+          select: {
+            upvotes: true,
+          },
+        },
+        upvotes: {
+          where: {
+            userId: data.creatorId,
+          },
+        },
+      },
+    });
+
+    return NextResponse.json({
+      message: "Stream added successfully",
+      stream: streamWithUpvotes ? {
+        ...streamWithUpvotes,
+        upvotes: streamWithUpvotes._count.upvotes,
+        haveUpVoted: streamWithUpvotes.upvotes.length > 0,
+      } : null
+    }, { status: 201 });
   } catch (e) {
     console.log(e)
     return NextResponse.json(
@@ -140,24 +161,42 @@ export async function GET(req:NextRequest){
         status: 400
       })
     }
-    const streams = await prismaClient.stream.findMany({
-      where: {
-        userId: creatorId,
-        active: true,
-        played: false,
-      },
-      include: {
-        _count: {
-          select: {
-            upvotes: true,
+    const [streams, currentStreamData] = await Promise.all([
+      prismaClient.stream.findMany({
+        where: {
+          userId: creatorId,
+          active: true,
+          played: false,
+        },
+        include: {
+          _count: {
+            select: {
+              upvotes: true,
+            },
+          },
+          upvotes: true, // Include all upvotes for counting
+        },
+        orderBy: {
+          createAt: 'asc',
+        },
+      }),
+      prismaClient.currentStream.findUnique({
+        where: {
+          userId: creatorId,
+        },
+        include: {
+          stream: {
+            include: {
+              _count: {
+                select: {
+                  upvotes: true,
+                },
+              },
+            },
           },
         },
-        upvotes: true, // Include all upvotes for counting
-      },
-      orderBy: {
-        createAt: 'asc',
-      },
-    });
+      })
+    ]);
     return NextResponse.json({
       streams: streams.map((stream) => ({
         id: stream.id,
@@ -171,6 +210,17 @@ export async function GET(req:NextRequest){
         userId: stream.userId,
         haveUpVoted: false, // For public view, maybe not check per user
       })),
+      currentStream: currentStreamData?.stream ? {
+        id: currentStreamData.stream.id,
+        title: currentStreamData.stream.title,
+        upvotes: currentStreamData.stream._count.upvotes,
+        extractedId: currentStreamData.stream.extractedId,
+        type: currentStreamData.stream.type,
+        url: currentStreamData.stream.url,
+        smallImg: currentStreamData.stream.smallImg,
+        bigImg: currentStreamData.stream.bigImg,
+        userId: currentStreamData.stream.userId,
+      } : null,
     });
   } catch (error) {
     console.error("Error fetching streams:", error);

@@ -24,28 +24,53 @@ export async function GET() {
       );
     }
 
-    const streams = await prismaClient.stream.findMany({
-      where: {
-        userId: user.id,
-        active: true,
-        played: false,
-      },
-      include: {
-        _count: {
-          select: {
-            upvotes: true,
+    const [streams, currentStreamData] = await Promise.all([
+      prismaClient.stream.findMany({
+        where: {
+          userId: user.id,
+          active: true,
+          played: false,
+        },
+        include: {
+          _count: {
+            select: {
+              upvotes: true,
+            },
+          },
+          upvotes: {
+            where: {
+              userId: user.id,
+            },
           },
         },
-        upvotes: {
-          where: {
-            userId: user.id,
+        orderBy: [
+          {
+            upvotes: {
+              _count: 'desc'
+            }
+          },
+          {
+            createAt: 'asc'
+          }
+        ],
+      }),
+      prismaClient.currentStream.findUnique({
+        where: {
+          userId: user.id,
+        },
+        include: {
+          stream: {
+            include: {
+              _count: {
+                select: {
+                  upvotes: true,
+                },
+              },
+            },
           },
         },
-      },
-      orderBy: {
-        createAt: 'asc',
-      },
-    });
+      })
+    ]);
 
     return NextResponse.json({
       streams: streams.map(({ _count, upvotes, ...rest }) => ({
@@ -53,6 +78,17 @@ export async function GET() {
         upvotes: _count.upvotes,
         haveUpVoted: upvotes.length > 0,
       })),
+      currentStream: currentStreamData?.stream ? {
+        id: currentStreamData.stream.id,
+        title: currentStreamData.stream.title,
+        upvotes: currentStreamData.stream._count.upvotes,
+        extractedId: currentStreamData.stream.extractedId,
+        type: currentStreamData.stream.type,
+        url: currentStreamData.stream.url,
+        smallImg: currentStreamData.stream.smallImg,
+        bigImg: currentStreamData.stream.bigImg,
+        userId: currentStreamData.stream.userId,
+      } : null,
     });
   } catch (error) {
     console.error("Error fetching streams:", error);

@@ -2,7 +2,8 @@ import { prismaClient } from "@/app/lib/db";
 
 import NextAuth from "next-auth"
 import GoogleProvider from "next-auth/providers/google";
-import type { User, Session, Account, Profile } from "next-auth";
+import type { User, Session } from "next-auth";
+
 
 
 export const authOptions = {
@@ -19,19 +20,26 @@ callbacks: {
       return false
     }
     try {
-      await prismaClient.user.create({
-        data: {
-          email: user.email,
-          provider: "Google"
+      const existingUser = await prismaClient.user.findUnique({
+        where: {
+          email: user.email
         }
-      })
+      });
+      if (!existingUser) {
+        await prismaClient.user.create({
+          data: {
+            email: user.email,
+            provider: "Google"
+          }
+        });
+      }
     } catch (error) {
       console.error("Error creating user:", error);
       return false;
     }
     return true;
   },
-  async session({ session, token }: { session: Session; token: any }) {
+  async session({ session }: { session: Session }) {
     if (session.user?.email) {
       const dbUser = await prismaClient.user.findUnique({
         where: {
@@ -39,7 +47,7 @@ callbacks: {
         }
       });
       if (dbUser) {
-        (session.user as any).id = dbUser.id;
+        session.user.id = dbUser.id;
       }
     }
     return session;
