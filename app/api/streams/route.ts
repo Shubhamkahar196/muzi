@@ -198,7 +198,7 @@ export async function GET(req:NextRequest){
       })
     ]);
     return NextResponse.json({
-      streams: streams.map((stream) => ({
+      streams: streams.map((stream: any) => ({
         id: stream.id,
         title: stream.title,
         upvotes: stream._count.upvotes,

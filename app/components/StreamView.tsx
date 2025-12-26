@@ -11,6 +11,7 @@ import axios from "axios";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import Image from "next/image";
 
 const REFRESH_INTERVAL_MS = 30_000;
 
@@ -81,12 +82,18 @@ export default function StreamView({ playVideo }: { playVideo: boolean }) {
     }
   }, [status, currentVideo]);
 
+  /* ---------------- INITIAL LOAD ---------------- */
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    refreshStreams();
+  }, [status, refreshStreams]);
+
   /* ---------------- POLLING ---------------- */
 
   useEffect(() => {
     if (status !== "authenticated") return;
 
-    refreshStreams();
     const interval = setInterval(refreshStreams, REFRESH_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [status, refreshStreams]);
@@ -203,9 +210,9 @@ export default function StreamView({ playVideo }: { playVideo: boolean }) {
               <Card key={s.id} className="mb-3 bg-zinc-900">
                 <CardContent className="flex justify-between items-center p-4">
                   <div className="flex gap-3">
-                    <img src={s.smallImg} className="w-12 h-12 rounded" />
+                    <Image src={s.smallImg} width={48} height={48} className="w-12 h-12 rounded" alt={s.title} />
                     <div>
-                      <p>{s.title}</p>
+                      <p className="text-zinc-50 font-semibold">{s.title}</p>
                       <Badge>{s.type}</Badge>
                     </div>
                   </div>
@@ -240,7 +247,7 @@ export default function StreamView({ playVideo }: { playVideo: boolean }) {
                   {playVideo && (
                     <div ref={videoPlayerRef} className="aspect-video" />
                   )}
-                  <p className="text-center mt-2">
+                  <p className="text-center mt-2 text-zinc-50 font-bold">
                     {currentVideo.title}
                   </p>
                 </>

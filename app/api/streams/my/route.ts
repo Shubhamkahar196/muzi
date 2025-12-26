@@ -73,7 +73,7 @@ export async function GET() {
     ]);
 
     return NextResponse.json({
-      streams: streams.map(({ _count, upvotes, ...rest }) => ({
+      streams: streams.map(({ _count, upvotes, ...rest }: any) => ({
         ...rest,
         upvotes: _count.upvotes,
         haveUpVoted: upvotes.length > 0,
