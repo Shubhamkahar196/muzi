@@ -36,21 +36,38 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const res = await youtubesearchapi.GetVideoDetails(extractedId)
-    console.log(res.title)
-    console.log(res.thumbnail.thumbnails)
-    const thumbnails = res.thumbnail.thumbnails
-    thumbnails.sort((a: {width:number}, b:{width:number}) => a.width < b.width ? -1 : 1);
+    // Try to get video details from YouTube oEmbed API
+    let videoTitle = `YouTube Video (${extractedId})`;
+    let thumbnailUrl = `https://img.youtube.com/vi/${extractedId}/maxresdefault.jpg`;
+
+    try {
+      // Use YouTube oEmbed API (free, no API key required)
+      const oEmbedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(data.url)}&format=json`;
+      const oEmbedResponse = await fetch(oEmbedUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; Muzi/1.0)',
+        },
+      });
+
+      if (oEmbedResponse.ok) {
+        const oEmbedData = await oEmbedResponse.json();
+        videoTitle = oEmbedData.title || videoTitle;
+        thumbnailUrl = oEmbedData.thumbnail_url || thumbnailUrl;
+      }
+    } catch (oEmbedError) {
+      console.warn('oEmbed API failed, using fallback:', oEmbedError);
+      // Continue with fallback values
+    }
+
     const newStream = await prismaClient.stream.create({
       data: {
         userId: data.creatorId,
         url: data.url,
         extractedId,
         type: "YouTube",
-        title: res.title ?? "can't find title",
-        smallImg: (thumbnails.length > 1 ? thumbnails[thumbnails.length -2].url: thumbnails[thumbnails.length -1].url) ??
-        "https://unsplash.com/s/photos/cat",
-        bigImg: thumbnails[thumbnails.length -1].url ?? "https://unsplash.com/s/photos/cat"
+        title: videoTitle,
+        smallImg: `https://img.youtube.com/vi/${extractedId}/mqdefault.jpg`,
+        bigImg: thumbnailUrl,
       },
     });
 
@@ -80,9 +97,13 @@ export async function POST(req: NextRequest) {
       } : null
     }, { status: 201 });
   } catch (e) {
-    console.log(e)
+    console.error('Error adding stream:', e);
+    const errorMessage = e instanceof Error ? e.message : 'Unknown error';
     return NextResponse.json(
-      { message: "Error while adding a stream" },
+      {
+        message: "Failed to add song. Please check the YouTube URL and try again.",
+        error: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+      },
       { status: 500 }
     );
   }
