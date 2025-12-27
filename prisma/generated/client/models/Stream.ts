@@ -541,10 +541,6 @@ export type EnumStreamTypeFieldUpdateOperationsInput = {
   set?: $Enums.StreamType
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
-}
-
 export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null
 }

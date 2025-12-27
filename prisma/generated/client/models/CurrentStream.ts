@@ -278,10 +278,6 @@ export type CurrentStreamUncheckedUpdateOneWithoutStreamNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.CurrentStreamUpdateToOneWithWhereWithoutStreamInput, Prisma.CurrentStreamUpdateWithoutStreamInput>, Prisma.CurrentStreamUncheckedUpdateWithoutStreamInput>
 }
 
-export type NullableStringFieldUpdateOperationsInput = {
-  set?: string | null
-}
-
 export type CurrentStreamCreateWithoutStreamInput = {
   userId: string
 }

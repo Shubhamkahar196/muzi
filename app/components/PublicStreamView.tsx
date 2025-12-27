@@ -60,6 +60,7 @@ export default function PublicStreamView({
   const [currentVideo, setCurrentVideo] = useState<Video | null>(null);
   const [loading, setLoading] = useState(true);
   const [inputLink, setInputLink] = useState("");
+  const [addingSong, setAddingSong] = useState(false);
 
   const videoPlayerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -74,6 +75,7 @@ export default function PublicStreamView({
       try {
         const res = await axios.get(`/api/streams?creatorId=${creatorId}`);
         const list: Stream[] = res.data.streams || [];
+        const currentStreamData = res.data.currentStream;
 
         const sorted = [...list].sort((a, b) => {
           if (b.upvotes !== a.upvotes) return b.upvotes - a.upvotes;
@@ -88,15 +90,26 @@ export default function PublicStreamView({
         setStreams(sorted);
         setLoading(false);
 
-        setCurrentVideo((prev) => {
-          if (prev || sorted.length === 0) return prev;
-          return {
-            id: sorted[0].id,
-            title: sorted[0].title,
-            extractedId: sorted[0].extractedId,
-            bigImg: sorted[0].bigImg,
-          };
-        });
+        // Always prioritize the current stream from API (creator's choice)
+        if (currentStreamData && currentStreamData.id) {
+          setCurrentVideo({
+            id: currentStreamData.id || "",
+            title: currentStreamData.title || "Unknown Title",
+            extractedId: currentStreamData.extractedId || "",
+            bigImg: currentStreamData.bigImg || "",
+          });
+        } else if (!currentVideo && sorted.length > 0) {
+          // Fallback: if no current stream set by creator, use the first in queue
+          const firstStream = sorted[0];
+          if (firstStream && firstStream.id) {
+            setCurrentVideo({
+              id: firstStream.id,
+              title: firstStream.title || "Unknown Title",
+              extractedId: firstStream.extractedId || "",
+              bigImg: firstStream.bigImg || "",
+            });
+          }
+        }
       } catch (err) {
         if (!cancelled) setLoading(false);
         console.error(err);
@@ -240,17 +253,32 @@ export default function PublicStreamView({
   }
 
   async function handleAddToQueue() {
+    if (!inputLink || addingSong) return;
+
     if (!canPerformAction("add_limit")) {
       toast.error("Wait 45 seconds or sign up");
       return;
     }
 
-    await axios.post("/api/streams", {
-      creatorId,
-      url: inputLink,
-    });
+    setAddingSong(true);
+    try {
+      await axios.post("/api/streams", {
+        creatorId,
+        url: inputLink,
+      });
 
-    setInputLink("");
+      setInputLink("");
+      toast.success("Song added to queue!");
+    } catch (error) {
+      console.error("Error adding song:", error);
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.message || "Failed to add song");
+      } else {
+        toast.error("Failed to add song");
+      }
+    } finally {
+      setAddingSong(false);
+    }
   }
 
   /* ---------------- UI ---------------- */
@@ -273,26 +301,26 @@ export default function PublicStreamView({
           ) : streams.length === 0 ? (
             <p>No songs in queue</p>
           ) : (
-            streams.map((s) => (
+            streams.filter(s => s && s.id).map((s) => (
               <Card key={s.id} className="mb-3 bg-zinc-900">
                 <CardContent className="flex justify-between items-center p-3">
                   <div className="flex gap-3">
                     <img
-                      src={s.smallImg}
-                      alt={s.title}
+                      src={s.smallImg || "https://via.placeholder.com/48x48?text=No+Image"}
+                      alt={s.title || "Unknown Title"}
                       className="w-12 h-12 rounded object-cover"
                       onError={(e) => {
                         e.currentTarget.src = "https://via.placeholder.com/48x48?text=No+Image";
                       }}
                     />
                     <div>
-                      <p className="text-zinc-50">{s.title}</p>
-                      <Badge>{s.type}</Badge>
+                      <p className="text-zinc-50">{s.title || "Unknown Title"}</p>
+                      <Badge>{s.type || "Unknown"}</Badge>
                     </div>
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={() => handleUpvote(s.id)} className="hover:bg-blue-500 cursor-pointer">
-                      <ThumbsUp size={14} /> {s.upvotes}
+                      <ThumbsUp size={14} /> {s.upvotes || 0}
                     </Button>
                     <Button size="sm" onClick={() => handleDownvote(s.id)} className="hover:bg-blue-500 cursor-pointer" >
                       <ThumbsDown size={14} />
@@ -328,8 +356,12 @@ export default function PublicStreamView({
               onChange={(e) => setInputLink(e.target.value)}
               placeholder="YouTube link"
             />
-            <Button className="w-full mt-2 hover:bg-blue-500 cursor-pointer" onClick={handleAddToQueue}>
-              Add to Queue
+            <Button
+              className="w-full mt-2 hover:bg-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleAddToQueue}
+              disabled={addingSong}
+            >
+              {addingSong ? "Adding..." : "Add to Queue"}
             </Button>
           </div>
         </div>

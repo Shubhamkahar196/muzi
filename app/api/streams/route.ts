@@ -210,16 +210,16 @@ export async function GET(req:NextRequest){
         userId: stream.userId,
         haveUpVoted: false, // For public view, maybe not check per user
       })),
-      currentStream: currentStreamData?.stream ? {
+      currentStream: (currentStreamData?.stream && currentStreamData.stream.id) ? {
         id: currentStreamData.stream.id,
-        title: currentStreamData.stream.title,
-        upvotes: currentStreamData.stream._count.upvotes,
-        extractedId: currentStreamData.stream.extractedId,
-        type: currentStreamData.stream.type,
-        url: currentStreamData.stream.url,
-        smallImg: currentStreamData.stream.smallImg,
-        bigImg: currentStreamData.stream.bigImg,
-        userId: currentStreamData.stream.userId,
+        title: currentStreamData.stream.title || "Unknown Title",
+        upvotes: currentStreamData.stream._count?.upvotes || 0,
+        extractedId: currentStreamData.stream.extractedId || "",
+        type: currentStreamData.stream.type || "YouTube",
+        url: currentStreamData.stream.url || "",
+        smallImg: currentStreamData.stream.smallImg || "https://via.placeholder.com/120x90?text=No+Image",
+        bigImg: currentStreamData.stream.bigImg || "https://via.placeholder.com/480x360?text=No+Image",
+        userId: currentStreamData.stream.userId || "",
       } : null,
     });
   } catch (error) {

@@ -28,18 +28,21 @@ export type UserMinAggregateOutputType = {
   id: string | null
   email: string | null
   provider: $Enums.Provider | null
+  isAnonymous: boolean | null
 }
 
 export type UserMaxAggregateOutputType = {
   id: string | null
   email: string | null
   provider: $Enums.Provider | null
+  isAnonymous: boolean | null
 }
 
 export type UserCountAggregateOutputType = {
   id: number
   email: number
   provider: number
+  isAnonymous: number
   _all: number
 }
 
@@ -48,18 +51,21 @@ export type UserMinAggregateInputType = {
   id?: true
   email?: true
   provider?: true
+  isAnonymous?: true
 }
 
 export type UserMaxAggregateInputType = {
   id?: true
   email?: true
   provider?: true
+  isAnonymous?: true
 }
 
 export type UserCountAggregateInputType = {
   id?: true
   email?: true
   provider?: true
+  isAnonymous?: true
   _all?: true
 }
 
@@ -137,8 +143,9 @@ export type UserGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
 
 export type UserGroupByOutputType = {
   id: string
-  email: string
-  provider: $Enums.Provider
+  email: string | null
+  provider: $Enums.Provider | null
+  isAnonymous: boolean
   _count: UserCountAggregateOutputType | null
   _min: UserMinAggregateOutputType | null
   _max: UserMaxAggregateOutputType | null
@@ -164,16 +171,18 @@ export type UserWhereInput = {
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   id?: Prisma.StringFilter<"User"> | string
-  email?: Prisma.StringFilter<"User"> | string
-  provider?: Prisma.EnumProviderFilter<"User"> | $Enums.Provider
+  email?: Prisma.StringNullableFilter<"User"> | string | null
+  provider?: Prisma.EnumProviderNullableFilter<"User"> | $Enums.Provider | null
+  isAnonymous?: Prisma.BoolFilter<"User"> | boolean
   streams?: Prisma.StreamListRelationFilter
   upvotes?: Prisma.UpvoteListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  email?: Prisma.SortOrder
-  provider?: Prisma.SortOrder
+  email?: Prisma.SortOrderInput | Prisma.SortOrder
+  provider?: Prisma.SortOrderInput | Prisma.SortOrder
+  isAnonymous?: Prisma.SortOrder
   streams?: Prisma.StreamOrderByRelationAggregateInput
   upvotes?: Prisma.UpvoteOrderByRelationAggregateInput
 }
@@ -184,15 +193,17 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
-  provider?: Prisma.EnumProviderFilter<"User"> | $Enums.Provider
+  provider?: Prisma.EnumProviderNullableFilter<"User"> | $Enums.Provider | null
+  isAnonymous?: Prisma.BoolFilter<"User"> | boolean
   streams?: Prisma.StreamListRelationFilter
   upvotes?: Prisma.UpvoteListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  email?: Prisma.SortOrder
-  provider?: Prisma.SortOrder
+  email?: Prisma.SortOrderInput | Prisma.SortOrder
+  provider?: Prisma.SortOrderInput | Prisma.SortOrder
+  isAnonymous?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
   _max?: Prisma.UserMaxOrderByAggregateInput
   _min?: Prisma.UserMinOrderByAggregateInput
@@ -203,76 +214,87 @@ export type UserScalarWhereWithAggregatesInput = {
   OR?: Prisma.UserScalarWhereWithAggregatesInput[]
   NOT?: Prisma.UserScalarWhereWithAggregatesInput | Prisma.UserScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"User"> | string
-  email?: Prisma.StringWithAggregatesFilter<"User"> | string
-  provider?: Prisma.EnumProviderWithAggregatesFilter<"User"> | $Enums.Provider
+  email?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  provider?: Prisma.EnumProviderNullableWithAggregatesFilter<"User"> | $Enums.Provider | null
+  isAnonymous?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
 }
 
 export type UserCreateInput = {
   id?: string
-  email: string
-  provider: $Enums.Provider
+  email?: string | null
+  provider?: $Enums.Provider | null
+  isAnonymous?: boolean
   streams?: Prisma.StreamCreateNestedManyWithoutUserInput
   upvotes?: Prisma.UpvoteCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
   id?: string
-  email: string
-  provider: $Enums.Provider
+  email?: string | null
+  provider?: $Enums.Provider | null
+  isAnonymous?: boolean
   streams?: Prisma.StreamUncheckedCreateNestedManyWithoutUserInput
   upvotes?: Prisma.UpvoteUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  provider?: Prisma.EnumProviderFieldUpdateOperationsInput | $Enums.Provider
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  provider?: Prisma.NullableEnumProviderFieldUpdateOperationsInput | $Enums.Provider | null
+  isAnonymous?: Prisma.BoolFieldUpdateOperationsInput | boolean
   streams?: Prisma.StreamUpdateManyWithoutUserNestedInput
   upvotes?: Prisma.UpvoteUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  provider?: Prisma.EnumProviderFieldUpdateOperationsInput | $Enums.Provider
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  provider?: Prisma.NullableEnumProviderFieldUpdateOperationsInput | $Enums.Provider | null
+  isAnonymous?: Prisma.BoolFieldUpdateOperationsInput | boolean
   streams?: Prisma.StreamUncheckedUpdateManyWithoutUserNestedInput
   upvotes?: Prisma.UpvoteUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
   id?: string
-  email: string
-  provider: $Enums.Provider
+  email?: string | null
+  provider?: $Enums.Provider | null
+  isAnonymous?: boolean
 }
 
 export type UserUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  provider?: Prisma.EnumProviderFieldUpdateOperationsInput | $Enums.Provider
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  provider?: Prisma.NullableEnumProviderFieldUpdateOperationsInput | $Enums.Provider | null
+  isAnonymous?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type UserUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  provider?: Prisma.EnumProviderFieldUpdateOperationsInput | $Enums.Provider
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  provider?: Prisma.NullableEnumProviderFieldUpdateOperationsInput | $Enums.Provider | null
+  isAnonymous?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type UserCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
   provider?: Prisma.SortOrder
+  isAnonymous?: Prisma.SortOrder
 }
 
 export type UserMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
   provider?: Prisma.SortOrder
+  isAnonymous?: Prisma.SortOrder
 }
 
 export type UserMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
   provider?: Prisma.SortOrder
+  isAnonymous?: Prisma.SortOrder
 }
 
 export type UserScalarRelationFilter = {
@@ -284,8 +306,16 @@ export type StringFieldUpdateOperationsInput = {
   set?: string
 }
 
-export type EnumProviderFieldUpdateOperationsInput = {
-  set?: $Enums.Provider
+export type NullableStringFieldUpdateOperationsInput = {
+  set?: string | null
+}
+
+export type NullableEnumProviderFieldUpdateOperationsInput = {
+  set?: $Enums.Provider | null
+}
+
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
 }
 
 export type UserCreateNestedOneWithoutStreamsInput = {
@@ -318,15 +348,17 @@ export type UserUpdateOneRequiredWithoutUpvotesNestedInput = {
 
 export type UserCreateWithoutStreamsInput = {
   id?: string
-  email: string
-  provider: $Enums.Provider
+  email?: string | null
+  provider?: $Enums.Provider | null
+  isAnonymous?: boolean
   upvotes?: Prisma.UpvoteCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutStreamsInput = {
   id?: string
-  email: string
-  provider: $Enums.Provider
+  email?: string | null
+  provider?: $Enums.Provider | null
+  isAnonymous?: boolean
   upvotes?: Prisma.UpvoteUncheckedCreateNestedManyWithoutUserInput
 }
 
@@ -348,29 +380,33 @@ export type UserUpdateToOneWithWhereWithoutStreamsInput = {
 
 export type UserUpdateWithoutStreamsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  provider?: Prisma.EnumProviderFieldUpdateOperationsInput | $Enums.Provider
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  provider?: Prisma.NullableEnumProviderFieldUpdateOperationsInput | $Enums.Provider | null
+  isAnonymous?: Prisma.BoolFieldUpdateOperationsInput | boolean
   upvotes?: Prisma.UpvoteUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutStreamsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  provider?: Prisma.EnumProviderFieldUpdateOperationsInput | $Enums.Provider
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  provider?: Prisma.NullableEnumProviderFieldUpdateOperationsInput | $Enums.Provider | null
+  isAnonymous?: Prisma.BoolFieldUpdateOperationsInput | boolean
   upvotes?: Prisma.UpvoteUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutUpvotesInput = {
   id?: string
-  email: string
-  provider: $Enums.Provider
+  email?: string | null
+  provider?: $Enums.Provider | null
+  isAnonymous?: boolean
   streams?: Prisma.StreamCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutUpvotesInput = {
   id?: string
-  email: string
-  provider: $Enums.Provider
+  email?: string | null
+  provider?: $Enums.Provider | null
+  isAnonymous?: boolean
   streams?: Prisma.StreamUncheckedCreateNestedManyWithoutUserInput
 }
 
@@ -392,15 +428,17 @@ export type UserUpdateToOneWithWhereWithoutUpvotesInput = {
 
 export type UserUpdateWithoutUpvotesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  provider?: Prisma.EnumProviderFieldUpdateOperationsInput | $Enums.Provider
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  provider?: Prisma.NullableEnumProviderFieldUpdateOperationsInput | $Enums.Provider | null
+  isAnonymous?: Prisma.BoolFieldUpdateOperationsInput | boolean
   streams?: Prisma.StreamUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutUpvotesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  provider?: Prisma.EnumProviderFieldUpdateOperationsInput | $Enums.Provider
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  provider?: Prisma.NullableEnumProviderFieldUpdateOperationsInput | $Enums.Provider | null
+  isAnonymous?: Prisma.BoolFieldUpdateOperationsInput | boolean
   streams?: Prisma.StreamUncheckedUpdateManyWithoutUserNestedInput
 }
 
@@ -448,6 +486,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   id?: boolean
   email?: boolean
   provider?: boolean
+  isAnonymous?: boolean
   streams?: boolean | Prisma.User$streamsArgs<ExtArgs>
   upvotes?: boolean | Prisma.User$upvotesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
@@ -457,21 +496,24 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   id?: boolean
   email?: boolean
   provider?: boolean
+  isAnonymous?: boolean
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   email?: boolean
   provider?: boolean
+  isAnonymous?: boolean
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectScalar = {
   id?: boolean
   email?: boolean
   provider?: boolean
+  isAnonymous?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "provider", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "provider" | "isAnonymous", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   streams?: boolean | Prisma.User$streamsArgs<ExtArgs>
   upvotes?: boolean | Prisma.User$upvotesArgs<ExtArgs>
@@ -488,8 +530,9 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
-    email: string
-    provider: $Enums.Provider
+    email: string | null
+    provider: $Enums.Provider | null
+    isAnonymous: boolean
   }, ExtArgs["result"]["user"]>
   composites: {}
 }
@@ -918,6 +961,7 @@ export interface UserFieldRefs {
   readonly id: Prisma.FieldRef<"User", 'String'>
   readonly email: Prisma.FieldRef<"User", 'String'>
   readonly provider: Prisma.FieldRef<"User", 'Provider'>
+  readonly isAnonymous: Prisma.FieldRef<"User", 'Boolean'>
 }
     
 
@@ -1136,7 +1180,7 @@ export type UserCreateArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs
   /**
    * The data needed to create a User.
    */
-  data: Prisma.XOR<Prisma.UserCreateInput, Prisma.UserUncheckedCreateInput>
+  data?: Prisma.XOR<Prisma.UserCreateInput, Prisma.UserUncheckedCreateInput>
 }
 
 /**

@@ -44,6 +44,7 @@ export default function StreamView({ playVideo }: { playVideo: boolean }) {
   const [currentVideo, setCurrentVideo] = useState<Video | null>(null);
   const [loading, setLoading] = useState(true);
   const [inputLink, setInputLink] = useState("");
+  const [addingSong, setAddingSong] = useState(false);
 
   const videoPlayerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -67,14 +68,26 @@ export default function StreamView({ playVideo }: { playVideo: boolean }) {
       setStreams(list);
       setLoading(false);
 
-      if (!currentVideo && res.data.currentStream) {
+      // Always sync with the current stream from API
+      if (res.data.currentStream && res.data.currentStream.id) {
         const s = res.data.currentStream;
         setCurrentVideo({
-          id: s.id,
-          title: s.title,
-          extractedId: s.extractedId,
-          bigImg: s.bigImg,
+          id: s.id || "",
+          title: s.title || "Unknown Title",
+          extractedId: s.extractedId || "",
+          bigImg: s.bigImg || "",
         });
+      } else if (!currentVideo && res.data.streams && res.data.streams.length > 0) {
+        // Fallback: if no current stream but there are streams, use the first one
+        const firstStream = res.data.streams[0];
+        if (firstStream && firstStream.id) {
+          setCurrentVideo({
+            id: firstStream.id,
+            title: firstStream.title || "Unknown Title",
+            extractedId: firstStream.extractedId || "",
+            bigImg: firstStream.bigImg || "",
+          });
+        }
       }
     } catch (err) {
       console.error(err);
@@ -102,7 +115,7 @@ export default function StreamView({ playVideo }: { playVideo: boolean }) {
 
   const playNext = useCallback(async () => {
     try {
-      const res = await axios.get("/api/next");
+      const res = await axios.get(`/api/next?creatorId=${session?.user?.id}`);
       const next = res.data.stream;
 
       if (!next) {
@@ -123,7 +136,7 @@ export default function StreamView({ playVideo }: { playVideo: boolean }) {
       console.error(err);
       toast.error("Failed to play next");
     }
-  }, [refreshStreams]);
+  }, [refreshStreams, session]);
 
   /* ---------------- YOUTUBE PLAYER ---------------- */
 
@@ -156,28 +169,44 @@ export default function StreamView({ playVideo }: { playVideo: boolean }) {
   async function handleUpvote(id: string) {
     await axios.post("/api/streams/upvote", { streamId: id });
     refreshStreams();
+    toast.success("Upvoted Song")
   }
 
   async function handleDownvote(id: string) {
     await axios.post("/api/streams/downvote", { streamId: id });
     refreshStreams();
+    toast.success("Downvoted Song")
   }
 
   async function handleDelete(id: string) {
     await axios.delete("/api/streams", { data: { streamId: id } });
     refreshStreams();
+    toast.error("Deleted Song")
   }
 
   async function handleAdd() {
-    if (!inputLink) return;
+    if (!inputLink || addingSong) return;
 
-    await axios.post("/api/streams", {
-      creatorId: session?.user?.id,
-      url: inputLink,
-    });
+    setAddingSong(true);
+    try {
+      await axios.post("/api/streams", {
+        creatorId: session?.user?.id,
+        url: inputLink,
+      });
 
-    setInputLink("");
-    refreshStreams();
+      setInputLink("");
+      refreshStreams();
+      toast.success("Song added to queue!");
+    } catch (error) {
+      console.error("Error adding song:", error);
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.message || "Failed to add song");
+      } else {
+        toast.error("Adding....")
+      }
+    } finally {
+      setAddingSong(false);
+    }
   }
 
   function handleShare() {
@@ -206,19 +235,25 @@ export default function StreamView({ playVideo }: { playVideo: boolean }) {
           ) : streams.length === 0 ? (
             <p>No videos in queue</p>
           ) : (
-            streams.map((s) => (
+            streams.filter(s => s && s.id).map((s) => (
               <Card key={s.id} className="mb-3 bg-zinc-900">
                 <CardContent className="flex justify-between items-center p-4">
                   <div className="flex gap-3">
-                    <Image src={s.smallImg} width={48} height={48} className="w-12 h-12 rounded" alt={s.title} />
+                    <Image
+                      src={s.smallImg || "https://via.placeholder.com/48x48?text=No+Image"}
+                      width={48}
+                      height={48}
+                      className="w-12 h-12 rounded"
+                      alt={s.title || "Unknown Title"}
+                    />
                     <div>
-                      <p className="text-zinc-50 font-semibold">{s.title}</p>
-                      <Badge>{s.type}</Badge>
+                      <p className="text-zinc-50 font-semibold">{s.title || "Unknown Title"}</p>
+                      <Badge>{s.type || "Unknown"}</Badge>
                     </div>
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={() => handleUpvote(s.id)} className="cursor-pointer hover:bg-blue-500">
-                      <ThumbsUp size={14} /> {s.upvotes}
+                      <ThumbsUp size={14} /> {s.upvotes || 0}
                     </Button>
                     <Button size="sm" onClick={() => handleDownvote(s.id)}>
                       <ThumbsDown size={14} />
@@ -269,8 +304,12 @@ export default function StreamView({ playVideo }: { playVideo: boolean }) {
             onChange={(e) => setInputLink(e.target.value)}
             placeholder="YouTube link"
           />
-          <Button onClick={handleAdd} className="w-full cursor-pointer hover:bg-blue-500">
-            Add to Queue
+          <Button
+            onClick={handleAdd}
+            disabled={addingSong}
+            className="w-full cursor-pointer hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {addingSong ? "Adding..." : "Add to Queue"}
           </Button>
         </div>
       </div>
