@@ -192,7 +192,7 @@ export default function StreamView({ playVideo }: { playVideo: boolean }) {
     <div className="min-h-screen bg-black text-white p-6">
       <div className="flex justify-between mb-6">
         <h1 className="text-2xl font-bold">Song Voting Queue</h1>
-        <Button onClick={handleShare}>
+        <Button onClick={handleShare} className="cursor-pointer hover:bg-blue-500">
           <Share2 size={16} /> Share
         </Button>
       </div>
@@ -217,7 +217,7 @@ export default function StreamView({ playVideo }: { playVideo: boolean }) {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" onClick={() => handleUpvote(s.id)}>
+                    <Button size="sm" onClick={() => handleUpvote(s.id)} className="cursor-pointer hover:bg-blue-500">
                       <ThumbsUp size={14} /> {s.upvotes}
                     </Button>
                     <Button size="sm" onClick={() => handleDownvote(s.id)}>
@@ -227,6 +227,7 @@ export default function StreamView({ playVideo }: { playVideo: boolean }) {
                       size="sm"
                       variant="destructive"
                       onClick={() => handleDelete(s.id)}
+                      className="cursor-pointer hover:bg-blue-500"
                     >
                       <Trash2 size={14} />
                     </Button>
@@ -252,13 +253,13 @@ export default function StreamView({ playVideo }: { playVideo: boolean }) {
                   </p>
                 </>
               ) : (
-                <p>No video playing</p>
+                <p className="text-zinc-100 font-semibold">No video playing</p>
               )}
             </CardContent>
           </Card>
 
           {playVideo && (
-            <Button onClick={playNext} className="w-full">
+            <Button onClick={playNext} className="w-full cursor-pointer hover:bg-blue-500">
               <Play size={18} /> Play Next
             </Button>
           )}
@@ -268,7 +269,7 @@ export default function StreamView({ playVideo }: { playVideo: boolean }) {
             onChange={(e) => setInputLink(e.target.value)}
             placeholder="YouTube link"
           />
-          <Button onClick={handleAdd} className="w-full">
+          <Button onClick={handleAdd} className="w-full cursor-pointer hover:bg-blue-500">
             Add to Queue
           </Button>
         </div>

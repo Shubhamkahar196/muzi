@@ -259,7 +259,7 @@ export default function PublicStreamView({
     <div className="min-h-screen bg-black text-white p-6">
       <div className="flex justify-between mb-6">
         <h1 className="text-2xl font-bold">Public Song Voting</h1>
-        <Button onClick={() => (window.location.href = "/")}>
+        <Button onClick={() => (window.location.href = "/")} className="hover:bg-blue-500 cursor-pointer">
           <UserPlus size={16} /> Sign Up
         </Button>
       </div>
@@ -291,10 +291,10 @@ export default function PublicStreamView({
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" onClick={() => handleUpvote(s.id)}>
+                    <Button size="sm" onClick={() => handleUpvote(s.id)} className="hover:bg-blue-500 cursor-pointer">
                       <ThumbsUp size={14} /> {s.upvotes}
                     </Button>
-                    <Button size="sm" onClick={() => handleDownvote(s.id)}>
+                    <Button size="sm" onClick={() => handleDownvote(s.id)} className="hover:bg-blue-500 cursor-pointer" >
                       <ThumbsDown size={14} />
                     </Button>
                   </div>
@@ -328,7 +328,7 @@ export default function PublicStreamView({
               onChange={(e) => setInputLink(e.target.value)}
               placeholder="YouTube link"
             />
-            <Button className="w-full mt-2" onClick={handleAddToQueue}>
+            <Button className="w-full mt-2 hover:bg-blue-500 cursor-pointer" onClick={handleAddToQueue}>
               Add to Queue
             </Button>
           </div>
