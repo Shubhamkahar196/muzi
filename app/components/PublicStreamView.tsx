@@ -284,18 +284,18 @@ export default function PublicStreamView({
   /* ---------------- UI ---------------- */
 
   return (
-    <div className="min-h-screen bg-black text-white p-6">
-      <div className="flex justify-between mb-6">
-        <h1 className="text-2xl font-bold">Public Song Voting</h1>
-        <Button onClick={() => (window.location.href = "/")} className="hover:bg-blue-500 cursor-pointer">
+    <div className="min-h-screen bg-black text-white p-4 md:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-6 gap-4">
+        <h1 className="text-xl md:text-2xl font-bold">Public Song Voting</h1>
+        <Button onClick={() => (window.location.href = "/")} className="hover:bg-blue-500 cursor-pointer w-full sm:w-auto">
           <UserPlus size={16} /> Sign Up
         </Button>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
         {/* Queue */}
         <div>
-          <h2 className="text-xl mb-3">Upcoming Songs</h2>
+          <h2 className="text-lg md:text-xl mb-3">Upcoming Songs</h2>
           {loading ? (
             <p>Loading...</p>
           ) : streams.length === 0 ? (

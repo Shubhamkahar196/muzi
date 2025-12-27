@@ -141,24 +141,44 @@ export default function StreamView({ playVideo }: { playVideo: boolean }) {
   /* ---------------- YOUTUBE PLAYER ---------------- */
 
   useEffect(() => {
-    if (!playVideo || !videoPlayerRef.current || !currentVideo) return;
+    if (!playVideo || !videoPlayerRef.current || !currentVideo || !currentVideo.extractedId) return;
 
     videoPlayerRef.current.innerHTML = "";
 
-    const player = YouTubePlayer(videoPlayerRef.current, {
-      videoId: currentVideo.extractedId,
-      playerVars: { autoplay: 1, controls: 1, rel: 0 },
-    });
+    try {
+      const player = YouTubePlayer(videoPlayerRef.current, {
+        videoId: currentVideo.extractedId,
+        playerVars: {
+          autoplay: 1,
+          controls: 1,
+          rel: 0,
+          modestbranding: 1,
+          iv_load_policy: 3
+        },
+      });
 
-    playerRef.current = player;
+      playerRef.current = player;
 
-    player.on("stateChange", (event: { data: number }) => {
-      if (event.data === 0) playNext();
-    });
+      player.on("stateChange", (event: { data: number }) => {
+        if (event.data === 0) playNext();
+      });
+
+      player.on("error", (error: any) => {
+        console.error("YouTube player error:", error);
+        toast.error("Error playing video");
+      });
+    } catch (error) {
+      console.error("Failed to initialize YouTube player:", error);
+      toast.error("Failed to load video player");
+    }
 
     return () => {
       if (playerRef.current) {
-        playerRef.current.destroy();
+        try {
+          playerRef.current.destroy();
+        } catch (e) {
+          console.warn("Error destroying player:", e);
+        }
         playerRef.current = null;
       }
     };
@@ -218,18 +238,18 @@ export default function StreamView({ playVideo }: { playVideo: boolean }) {
   /* ---------------- UI ---------------- */
 
   return (
-    <div className="min-h-screen bg-black text-white p-6">
-      <div className="flex justify-between mb-6">
-        <h1 className="text-2xl font-bold">Song Voting Queue</h1>
-        <Button onClick={handleShare} className="cursor-pointer hover:bg-blue-500">
+    <div className="min-h-screen bg-black text-white p-4 md:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-6 gap-4">
+        <h1 className="text-xl md:text-2xl font-bold">Song Voting Queue</h1>
+        <Button onClick={handleShare} className="cursor-pointer hover:bg-blue-500 w-full sm:w-auto">
           <Share2 size={16} /> Share
         </Button>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
         {/* Queue */}
         <div>
-          <h2 className="text-xl mb-4">Upcoming Songs</h2>
+          <h2 className="text-lg md:text-xl mb-4">Upcoming Songs</h2>
           {loading ? (
             <p>Loading...</p>
           ) : streams.length === 0 ? (
