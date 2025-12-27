@@ -181,30 +181,63 @@ export default function PublicStreamView({
   /* ---------------- YOUTUBE PLAYER ---------------- */
 
   useEffect(() => {
-    if (!videoPlayerRef.current || !currentVideo) return;
+    if (!videoPlayerRef.current || !currentVideo || !currentVideo.extractedId) return;
+
+    // Validate videoId format (should be 11 characters)
+    if (currentVideo.extractedId.length !== 11) {
+      console.error("Invalid YouTube video ID:", currentVideo.extractedId);
+      return;
+    }
 
     videoPlayerRef.current.innerHTML = "";
 
-    const player = YouTubePlayer(videoPlayerRef.current, {
-      videoId: currentVideo.extractedId,
-      playerVars: {
-        autoplay: 1,
-        controls: 1,
-        rel: 0,
-      },
-    });
+    try {
+      const player = YouTubePlayer(videoPlayerRef.current, {
+        videoId: currentVideo.extractedId,
+        width: '100%',
+        height: '100%',
+        playerVars: {
+          autoplay: 1,
+          controls: 1,
+          rel: 0,
+          modestbranding: 1,
+          iv_load_policy: 3,
+          fs: 1,
+          cc_load_policy: 0,
+          playsinline: 1,
+          enablejsapi: 1,
+          origin: typeof window !== 'undefined' ? window.location.origin : ''
+        },
+      });
 
-    playerRef.current = player;
+      playerRef.current = player;
 
-    player.on("stateChange", (event: { data: number }) => {
-      if (event.data === 0) {
-        playNextVideo();
-      }
-    });
+      player.on("ready", () => {
+        console.log("YouTube player ready");
+      });
+
+      player.on("stateChange", (event: { data: number }) => {
+        console.log("Player state:", event.data);
+        if (event.data === 0) { // Video ended
+          playNextVideo();
+        }
+      });
+
+      player.on("error", (error: any) => {
+        console.error("YouTube player error:", error);
+        toast.error("Error playing video - it may be private or unavailable");
+      });
+    } catch (error) {
+      console.error("Failed to initialize YouTube player:", error);
+    }
 
     return () => {
       if (playerRef.current) {
-        playerRef.current.destroy();
+        try {
+          playerRef.current.destroy();
+        } catch (e) {
+          console.warn("Error destroying player:", e);
+        }
         playerRef.current = null;
       }
     };
@@ -334,18 +367,24 @@ export default function PublicStreamView({
 
         {/* Player */}
         <div>
-          <h2 className="text-xl mb-3">Now Playing</h2>
+          <h2 className="text-lg md:text-xl mb-3">Now Playing</h2>
           <Card className="bg-zinc-900">
             <CardContent className="p-4">
               {currentVideo ? (
                 <>
-                  <div ref={videoPlayerRef} className="aspect-video" />
-                  <p className="mt-3 text-center text-zinc-300">
+                  <div
+                    ref={videoPlayerRef}
+                    className="w-full aspect-video bg-black rounded"
+                    style={{ minHeight: '200px' }}
+                  />
+                  <p className="mt-3 text-center text-zinc-300 font-bold text-sm md:text-base">
                     {currentVideo.title}
                   </p>
                 </>
               ) : (
-                <p>No song playing</p>
+                <div className="w-full aspect-video bg-zinc-800 rounded flex items-center justify-center">
+                  <p className="text-zinc-400 font-semibold">No song playing</p>
+                </div>
               )}
             </CardContent>
           </Card>

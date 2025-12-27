@@ -143,29 +143,50 @@ export default function StreamView({ playVideo }: { playVideo: boolean }) {
   useEffect(() => {
     if (!playVideo || !videoPlayerRef.current || !currentVideo || !currentVideo.extractedId) return;
 
+    // Validate videoId format (should be 11 characters)
+    if (currentVideo.extractedId.length !== 11) {
+      console.error("Invalid YouTube video ID:", currentVideo.extractedId);
+      toast.error("Invalid video ID");
+      return;
+    }
+
     videoPlayerRef.current.innerHTML = "";
 
     try {
       const player = YouTubePlayer(videoPlayerRef.current, {
         videoId: currentVideo.extractedId,
+        width: '100%',
+        height: '100%',
         playerVars: {
           autoplay: 1,
           controls: 1,
           rel: 0,
           modestbranding: 1,
-          iv_load_policy: 3
+          iv_load_policy: 3,
+          fs: 1,
+          cc_load_policy: 0,
+          playsinline: 1,
+          enablejsapi: 1,
+          origin: typeof window !== 'undefined' ? window.location.origin : ''
         },
       });
 
       playerRef.current = player;
 
+      player.on("ready", () => {
+        console.log("YouTube player ready");
+      });
+
       player.on("stateChange", (event: { data: number }) => {
-        if (event.data === 0) playNext();
+        console.log("Player state:", event.data);
+        if (event.data === 0) { // Video ended
+          playNext();
+        }
       });
 
       player.on("error", (error: any) => {
         console.error("YouTube player error:", error);
-        toast.error("Error playing video");
+        toast.error("Error playing video - it may be private or unavailable");
       });
     } catch (error) {
       console.error("Failed to initialize YouTube player:", error);
@@ -295,20 +316,26 @@ export default function StreamView({ playVideo }: { playVideo: boolean }) {
 
         {/* Player */}
         <div className="space-y-4">
-          <h2 className="text-xl">Now Playing</h2>
+          <h2 className="text-lg md:text-xl">Now Playing</h2>
           <Card className="bg-zinc-900">
             <CardContent className="p-4">
               {currentVideo ? (
                 <>
                   {playVideo && (
-                    <div ref={videoPlayerRef} className="aspect-video" />
+                    <div
+                      ref={videoPlayerRef}
+                      className="w-full aspect-video bg-black rounded"
+                      style={{ minHeight: '200px' }}
+                    />
                   )}
-                  <p className="text-center mt-2 text-zinc-50 font-bold">
+                  <p className="text-center mt-2 text-zinc-50 font-bold text-sm md:text-base">
                     {currentVideo.title}
                   </p>
                 </>
               ) : (
-                <p className="text-zinc-100 font-semibold">No video playing</p>
+                <div className="w-full aspect-video bg-zinc-800 rounded flex items-center justify-center">
+                  <p className="text-zinc-400 font-semibold">No video playing</p>
+                </div>
               )}
             </CardContent>
           </Card>
