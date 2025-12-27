@@ -168,7 +168,7 @@ export default function StreamView({ playVideo }: { playVideo: boolean }) {
           playsinline: 1,
           enablejsapi: 1,
           origin: typeof window !== 'undefined' ? window.location.origin : ''
-        },
+        } as any,
       });
 
       playerRef.current = player;

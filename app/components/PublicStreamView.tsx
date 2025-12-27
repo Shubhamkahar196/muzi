@@ -207,7 +207,7 @@ export default function PublicStreamView({
           playsinline: 1,
           enablejsapi: 1,
           origin: typeof window !== 'undefined' ? window.location.origin : ''
-        },
+        } as any,
       });
 
       playerRef.current = player;
