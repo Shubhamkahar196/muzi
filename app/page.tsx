@@ -8,9 +8,7 @@ import {
   Users,
   Radio,
   Sparkles,
-  Github,
-  Twitter,
-  Instagram,
+ 
 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
