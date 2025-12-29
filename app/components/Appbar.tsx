@@ -26,7 +26,7 @@ export function Appbar() {
         ) : (
           <Button
             className="bg-purple-600 text-white hover:bg-purple-700"
-            onClick={() => signIn()}
+            onClick={() => signIn(undefined, { callbackUrl: '/dashboard' })}
           >
             Signin
           </Button>
