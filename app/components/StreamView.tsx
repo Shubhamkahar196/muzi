@@ -296,7 +296,7 @@ export default function StreamView({ playVideo }: { playVideo: boolean }) {
                     <Button size="sm" onClick={() => handleUpvote(s.id)} className="cursor-pointer hover:bg-blue-500">
                       <ThumbsUp size={14} /> {s.upvotes || 0}
                     </Button>
-                    <Button size="sm" onClick={() => handleDownvote(s.id)}>
+                    <Button size="sm" onClick={() => handleDownvote(s.id)} className="cursor-pointer hover:bg-blue-500">
                       <ThumbsDown size={14} />
                     </Button>
                     <Button

@@ -2,14 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import {
-  ArrowRight,
-  Music,
-  Users,
-  Radio,
-  Sparkles,
- 
-} from "lucide-react";
+import { ArrowRight, Music, Users, Radio, Sparkles } from "lucide-react";
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -73,8 +66,8 @@ export default function Home() {
           trigger: "body",
           start: "top top",
           end: "bottom bottom",
-          scrub: 1
-        }
+          scrub: 1,
+        },
       });
 
       gsap.to(".bg-purple-glow", {
@@ -84,8 +77,8 @@ export default function Home() {
           trigger: "body",
           start: "top top",
           end: "bottom bottom",
-          scrub: 1
-        }
+          scrub: 1,
+        },
       });
 
       // 2. Hero section parallax
@@ -96,8 +89,8 @@ export default function Home() {
           trigger: ".hero-section",
           start: "top bottom",
           end: "bottom top",
-          scrub: 1
-        }
+          scrub: 1,
+        },
       });
 
       gsap.to(".hero-image", {
@@ -107,8 +100,8 @@ export default function Home() {
           trigger: ".hero-section",
           start: "top bottom",
           end: "bottom top",
-          scrub: 1
-        }
+          scrub: 1,
+        },
       });
 
       // 3. Feature cards reveal animation on scroll
@@ -117,7 +110,7 @@ export default function Home() {
         {
           opacity: 0,
           y: 60,
-          scale: 0.9
+          scale: 0.9,
         },
         {
           opacity: 1,
@@ -130,8 +123,8 @@ export default function Home() {
             trigger: "#features",
             start: "top 80%",
             end: "bottom 20%",
-            toggleActions: "play none none reverse"
-          }
+            toggleActions: "play none none reverse",
+          },
         }
       );
 
@@ -140,7 +133,7 @@ export default function Home() {
         ".features-title",
         {
           opacity: 0,
-          y: 30
+          y: 30,
         },
         {
           opacity: 1,
@@ -150,8 +143,8 @@ export default function Home() {
           scrollTrigger: {
             trigger: "#features",
             start: "top 85%",
-            toggleActions: "play none none reverse"
-          }
+            toggleActions: "play none none reverse",
+          },
         }
       );
 
@@ -163,8 +156,8 @@ export default function Home() {
           trigger: ".hero-section",
           start: "top top",
           end: "bottom top",
-          scrub: 0.5
-        }
+          scrub: 0.5,
+        },
       });
 
       // 6. Background color change effect
@@ -175,8 +168,8 @@ export default function Home() {
           trigger: "#features",
           start: "top center",
           end: "bottom center",
-          scrub: 1
-        }
+          scrub: 1,
+        },
       });
 
       // 7. Floating music note rotation
@@ -189,8 +182,8 @@ export default function Home() {
           trigger: ".hero-section",
           start: "top bottom",
           end: "bottom top",
-          scrub: 1
-        }
+          scrub: 1,
+        },
       });
 
       // 8. Text reveal effect for features description
@@ -198,7 +191,7 @@ export default function Home() {
         ".features-desc",
         {
           opacity: 0,
-          x: -50
+          x: -50,
         },
         {
           opacity: 1,
@@ -208,8 +201,8 @@ export default function Home() {
           scrollTrigger: {
             trigger: "#features",
             start: "top 75%",
-            toggleActions: "play none none reverse"
-          }
+            toggleActions: "play none none reverse",
+          },
         }
       );
 
@@ -218,7 +211,7 @@ export default function Home() {
         ".feature-icon",
         {
           scale: 0,
-          rotation: -180
+          rotation: -180,
         },
         {
           scale: 1,
@@ -229,8 +222,8 @@ export default function Home() {
           scrollTrigger: {
             trigger: "#features",
             start: "top 70%",
-            toggleActions: "play none none reverse"
-          }
+            toggleActions: "play none none reverse",
+          },
         }
       );
 
@@ -239,7 +232,7 @@ export default function Home() {
         "footer",
         {
           opacity: 0,
-          y: 50
+          y: 50,
         },
         {
           opacity: 1,
@@ -249,11 +242,10 @@ export default function Home() {
           scrollTrigger: {
             trigger: "footer",
             start: "top 90%",
-            toggleActions: "play none none reverse"
-          }
+            toggleActions: "play none none reverse",
+          },
         }
       );
-
     }, document.body);
 
     return () => ctx.revert();
@@ -293,14 +285,15 @@ export default function Home() {
               </p>
 
               <div className="mt-6 lg:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start">
-                <Button className="bg-yellow-400 text-black hover:bg-yellow-300 rounded-full px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg w-full sm:w-auto">
-                  <Link href="/api/auth/signin" className="flex items-center justify-center">
+                <Link
+                  href="/api/auth/signin?callbackUrl=/dashboard"
+                  className="flex items-center justify-center"
+                >
+                  <Button className="bg-yellow-400 text-black hover:bg-yellow-300 rounded-full px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg w-full sm:w-auto">
                     Get Started{" "}
                     <ArrowRight className="ml-2 h-4 w-4 lg:h-5 lg:w-5" />
-                  </Link>
-                </Button>
-
-               
+                  </Button>
+                </Link>
               </div>
             </div>
 
@@ -336,8 +329,7 @@ export default function Home() {
       >
         <div className="text-center mb-12 lg:mb-16">
           <h2 className="features-title text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
-            Why Creators Love{" "}
-            <span className="text-cyan-400">Muzi</span>
+            Why Creators Love <span className="text-cyan-400">Muzi</span>
           </h2>
           <p className="features-desc mt-4 text-gray-400 max-w-2xl mx-auto text-sm sm:text-base px-4">
             Built for streamers, DJs, and creators who want real audience
@@ -353,12 +345,16 @@ export default function Home() {
               desc: "Your audience suggests and votes for songs in real time.",
             },
             {
-              icon: <Radio className="h-8 w-8 sm:h-10 sm:w-10 text-purple-400" />,
+              icon: (
+                <Radio className="h-8 w-8 sm:h-10 sm:w-10 text-purple-400" />
+              ),
               title: "Multi-Platform Support",
               desc: "Works seamlessly with YouTube and Spotify.",
             },
             {
-              icon: <Sparkles className="h-8 w-8 sm:h-10 sm:w-10 text-yellow-400" />,
+              icon: (
+                <Sparkles className="h-8 w-8 sm:h-10 sm:w-10 text-yellow-400" />
+              ),
               title: "Live Engagement",
               desc: "Boost interaction with instant feedback and voting.",
             },
@@ -376,7 +372,9 @@ export default function Home() {
               <h3 className="text-lg sm:text-xl font-semibold mb-2">
                 {feature.title}
               </h3>
-              <p className="text-gray-400 text-sm sm:text-base">{feature.desc}</p>
+              <p className="text-gray-400 text-sm sm:text-base">
+                {feature.desc}
+              </p>
             </div>
           ))}
         </div>
@@ -384,19 +382,15 @@ export default function Home() {
 
       {/* ================= FOOTER ================= */}
       <footer className=" mt-24 py-12 px-4 sm:px-6">
-        
-         
-
-          {/* Bottom Section */}
-          <div className="border-t border-white/10 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="text-sm text-gray-500">
-              © 2025 Muzi. All rights reserved.
-            </div>
-            <div className="flex gap-6 text-sm text-gray-400">
-              <span>Made with ❤️ for music creators</span>
-            </div>
+        {/* Bottom Section */}
+        <div className="border-t border-white/10 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="text-sm text-gray-500">
+            © 2025 Muzi. All rights reserved.
           </div>
-        
+          <div className="flex gap-6 text-sm text-gray-400">
+            <span>Made with ❤️ for music creators</span>
+          </div>
+        </div>
       </footer>
     </div>
   );

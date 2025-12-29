@@ -4,6 +4,7 @@ import { prismaClient } from "@/app/lib/db";
 import NextAuth from "next-auth"
 import GoogleProvider from "next-auth/providers/google";
 import type { User, Session } from "next-auth";
+import { redirect } from "next/navigation";
 
 
 
@@ -39,6 +40,12 @@ callbacks: {
       return false;
     }
     return true;
+  },
+  async redirect({url, baseUrl}: {url: string; baseUrl: string}){
+    if(url.startsWith(baseUrl)){
+      return url
+    }
+    return `${baseUrl}/dashboard`;
   },
   async session({ session }: { session: Session }) {
     if (session.user?.email) {
